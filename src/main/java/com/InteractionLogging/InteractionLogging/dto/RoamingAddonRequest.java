@@ -51,11 +51,17 @@ public class RoamingAddonRequest {
 		private String segments;
 		private String notes;
 		private String documents;
-		
-		
-		
-		
-		
+		private String customerClass;
+
+
+		public String getCustomerClass() {
+			return customerClass;
+		}
+
+		public void setCustomerClass(String customerClass) {
+			this.customerClass = customerClass;
+		}
+
 		public String getDocuments() {
 			return documents;
 		}

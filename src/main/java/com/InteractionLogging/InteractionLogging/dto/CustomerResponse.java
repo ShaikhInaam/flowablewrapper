@@ -107,7 +107,15 @@ public class CustomerResponse {
 		private CreditReason creditReason;
 		private List<Subscriptions> subscriptions; 
 		private List<Notes> notes;
-		
+		private String customerClass;
+
+		public String getCustomerClass() {
+			return customerClass;
+		}
+
+		public void setCustomerClass(String customerClass) {
+			this.customerClass = customerClass;
+		}
 
 		public List<Notes> getNotes() {
 			return notes;

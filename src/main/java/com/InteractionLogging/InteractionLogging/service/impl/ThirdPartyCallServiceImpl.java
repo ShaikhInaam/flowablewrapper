@@ -44,8 +44,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,6 +98,7 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
         requiredInfo.setSegments("true");
         requiredInfo.setNotes("true");
         requiredInfo.setDocuments("true");
+        requiredInfo.setCustomerClass("true");
 
         roamingAddonRequest.setRequiredInfo(requiredInfo);
         roamingAddonRequest.setAccountNumber(request.getMsisdn());
@@ -133,8 +136,8 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
 
             if(customerResponse !=null && customerResponse.getResult() !=null){
 
-                if(customerResponse.getResult().getSegment() !=null){
-                    consumerValueSegment = customerResponse.getResult().getSegment().getCode();
+                if(customerResponse.getResult().getAccounts() != null && customerResponse.getResult().getAccounts().size() > 0 ){
+                    consumerValueSegment = customerResponse.getResult().getAccounts().get(0).getCustomerClass();
                 }
 
                 if(customerResponse.getResult().getNationality() !=null){
@@ -179,24 +182,24 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
                     if("ACTIVE".equals(registrationStatus)){
 
                         effectiveTill = customerResponse.getResult().getDocuments().get(0).getEffectiveTill();
-                        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
-                        String dateString = format.format(new Date());
-                        Date dateToday = new Date(dateString);
-                        Date effectiveTillDate = format.parse(effectiveTill);
-                        long difference_In_Time = effectiveTillDate.getTime() - dateToday.getTime();
-                        long difference_In_Days = (difference_In_Time / (1000 * 60 * 60 * 24)) % 365;
+                        SimpleDateFormat parser = new SimpleDateFormat("yyyy/MM/dd");
+                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                        LocalDate dateToday = LocalDate.now();
+                        Date effectiveTillParsed = parser.parse(effectiveTill);
+                        String effectiveTillFormated = format.format(effectiveTillParsed);
+                        LocalDate effectiveTillDate = LocalDate.parse(effectiveTillFormated);
 
-                        if(difference_In_Days > -1 && difference_In_Days <= 30){
+                        if(ChronoUnit.DAYS.between(dateToday, effectiveTillDate) <=30) {
+
 
                             registrationStatus = "NONACTIVE";
 
-                            if("en".equalsIgnoreCase(request.getLang())){
-                                registrationMessage = "Dear customer we noticed that your mobile account registration is about expire by "+effectiveTill+". Please select one of the following options to continue.";
-                            }
+                            if ("en".equalsIgnoreCase(request.getLang())) {
+                                registrationMessage = "Dear customer we noticed that your mobile account registration is about expire by " + effectiveTill + ". Please select one of the following options to continue.";
+                            } else {
 
-                            else {
+                                registrationMessage = " لاحظنا أن فترة صلاحية تسجيل هاتفك المتحرك على وشك أن تنتهي " + effectiveTill + ". يرجى تحديد أحد الخيارات التالية للاستمرار ";
 
-                                registrationMessage = " لاحظنا أن فترة صلاحية تسجيل هاتفك المتحرك على وشك أن تنتهي "+effectiveTill + " يرجى تحديد أحد الخيارات التالية للاستمرار. ";
                             }
 
                             System.out.println(registrationMessage);
@@ -383,7 +386,7 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
 
                             }else{
 
-                                openComplaintsMessage =  complainNumber+" يرجى تحديد أحد الخيارات التالية للاستمرار. رقم الشكوى:"+request.getMsisdn() +"لاحظنا أن هناك شكوى تتعلّق بالفواتير والرسوم موجودة بالفعل ضمن حسابك ";
+                                openComplaintsMessage =  complainNumber +": لاحظنا أن هناك شكوى تتعلّق بالفواتير والرسوم موجودة بالفعل ضمن حسابك "+request.getMsisdn() +". يرجى تحديد أحد الخيارات التالية للاستمرار. رقم الشكوى  ";
                             }
                         }
 
@@ -470,7 +473,7 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
 
                             }else{
 
-                                openOrdersMessage = orderNumber + " يرجى تحديد أحد الخيارات التالية للاستمرار. رقم الطلب:"+ request.getMsisdn() + "لاحظنا أن هذا الطلب موجود بالفعل ضمن حسابك ";
+                                openOrdersMessage =  orderNumber + " :لاحظنا أن هذا الطلب موجود بالفعل ضمن حسابك "+ request.getMsisdn() + ". يرجى تحديد أحد الخيارات التالية للاستمرار. رقم الطلب ";
                             }
 
 
@@ -564,7 +567,7 @@ public class ThirdPartyCallServiceImpl implements ThirdPartyCallService {
 
                             }else{
 
-                                minimumBalanceMessage = " يرجى تحديد أحد الخيارات التالية للاستمرار." +prepaidBalance + "لاحظنا أن رصيد حسابك المدفوع مقدماً في انخفاض. رصيد حسابك الحالي ";
+                                minimumBalanceMessage =   " لاحظنا أن رصيد حسابك المدفوع مقدماً في انخفاض. رصيد حسابك الحالي " +prepaidBalance + ". يرجى تحديد أحد الخيارات التالية للاستمرار ";
 
                             }
 
